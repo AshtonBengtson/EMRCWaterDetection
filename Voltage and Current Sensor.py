@@ -10,9 +10,9 @@ MODE_POWER   = const(0x02)
 
 # I2C Configuration
 i2c1 = I2C(1, scl=Pin(15), sda=Pin(14), freq=100000)  # I2C1 for first INA219
-##i2c0 = I2C(0, scl=Pin(9), sda=Pin(8), freq=100000)    # I2C0 for second INA219
+i2c0 = I2C(0, scl=Pin(9), sda=Pin(8), freq=100000)    # I2C0 for second INA219
 print("I2C1 devices:", i2c1.scan())
-##print("I2C0 devices:", i2c0.scan())
+print("I2C0 devices:", i2c0.scan())
 
 # INA219 Configuration
 I2CADR1 = 0x40  # Address for first INA219 (current measurement)
@@ -23,7 +23,7 @@ MAX_EXPECTED_AMPS = 0.2
 # Initialize INA219 sensors
 from INA219 import INA219  # Import after I2C configuration
 meter_current = INA219(i2c1, I2CADR1, SHUNT_OHMS)  # First sensor on I2C1
-##meter_voltage = INA219(i2c0, I2CADR2, SHUNT_OHMS)  # Second sensor on I2C0
+meter_voltage = INA219(i2c0, I2CADR2, SHUNT_OHMS)  # Second sensor on I2C0
 meter_current.configure()
 ##meter_voltage.configure()
 
@@ -36,7 +36,7 @@ current_mA = 0
 voltage_1 = 0  # Voltage from the first INA219
 voltage_2 = 0  # Voltage from the second INA219
 startTime = time.ticks_ms()
-mode = MODE_VOLTAGE
+mode = MODE_POWER
 
 # BLE Advertising Data
 def advertise():
@@ -55,7 +55,7 @@ def measurement():
     global current_mA, voltage_1, voltage_2
     current_mA = meter_current.current()
     voltage_1 = meter_current.voltage()
-    ##voltage_2 = meter_voltage.voltage()
+    voltage_2 = meter_voltage.voltage()
     print("Sensor 1 - V={0:.2f}V, I={1:.2f}mA".format(voltage_1, current_mA))
     print("Sensor 2 - V={0:.2f}V".format(voltage_2))
 
@@ -63,8 +63,8 @@ def measurement():
 def send_meter_data():
     s = ""
     if mode == MODE_VOLTAGE:
-        s = "AT+V1={0:.2f}\r\n".format(voltage_1) ##temp, use below
-    ##    s = "AT+V1={0:.2f}, V2={1:.2f}\r\n".format(voltage_1, voltage_2)
+        s = "AT+V={0:.2f}\r\n".format(voltage_2)
+        #s = "AT+V1={0:.2f}, V2={1:.2f}\r\n".format(voltage_1, voltage_2)
     elif mode == MODE_CURRENT:
         s = "AT+IMA={0:.2f}\r\n".format(current_mA)
     elif mode == MODE_POWER:
